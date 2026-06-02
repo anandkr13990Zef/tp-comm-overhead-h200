@@ -1,0 +1,71 @@
+==============================================================================
+TENSOR-PARALLEL OVERHEAD: real 2x H200 NVLink vs single-GPU stream proxy
+generated 2026-06-02T20:39:14
+==============================================================================
+
+[SETUP]
+torch 2.11.0+cu130 | cuda 13.0 | nccl 2.28.9 | gpus ['NVIDIA H200', 'NVIDIA H200']
+
+NVIDIA H200, 580.126.20, 143771 MiB
+NVIDIA H200, 580.126.20, 143771 MiB
+
+[TOPOLOGY] NV18 = 18 bonded NVLinks (~900 GB/s bidir)
+[4mGPU0	GPU1	NIC0	NIC1	NIC2	NIC3	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	NV18	PIX	PIX	SYS	SYS	0,2,4,6,8,10	0		N/A
+GPU1	NV18	 X 	NODE	NODE	SYS	SYS	0,2,4,6,8,10	0		N/A
+NIC0	PIX	NODE	 X 	PIX	SYS	SYS				
+NIC1	PIX	NODE	PIX	 X 	SYS	SYS				
+NIC2	SYS	SYS	SYS	SYS	 X 	PIX				
+NIC3	SYS	SYS	SYS	SYS	PIX	 X 				
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+NIC Legend:
+
+  NIC0: mlx5_1
+  NIC1: mlx5_2
+  NIC2: mlx5_7
+  NIC3: mlx5_8
+
+[NVLINK ALL-REDUCE BANDWIDTH]
+# world_size=2 dtype=bf16 nccl=(2, 28, 9)
+       1 MB     0.040ms  algbw    26.3 GB/s  busbw    26.3 GB/s
+       4 MB     0.053ms  algbw    79.8 GB/s  busbw    79.8 GB/s
+      16 MB     0.093ms  algbw   181.2 GB/s  busbw   181.2 GB/s
+      64 MB     0.263ms  algbw   255.1 GB/s  busbw   255.1 GB/s
+     256 MB     0.906ms  algbw   296.3 GB/s  busbw   296.3 GB/s
+    1024 MB     3.283ms  algbw   327.0 GB/s  busbw   327.0 GB/s
+
+[RESULTS] comm% = per-layer all-reduce / layer total. gap_pp = real - sim.
+
+model batch   seq | comm%_real comm%_sim  gap_pp |  tok/s_real
+----------------------------------------------------------------------
+  13b     1   512 |      35.71      2.87   32.84 |     11899.4
+  13b     1  2048 |      11.31      1.49    9.82 |     30325.7
+  13b     4   512 |      11.51      1.51   10.00 |     30850.5
+  13b     4  2048 |      10.00      1.17    8.83 |     32979.5
+  13b    16   512 |      10.07      1.18    8.89 |     33423.4
+  13b    16  2048 |      10.06      1.09    8.97 |     33404.5
+  13b    64   512 |      10.76      1.11    9.65 |     33185.6
+  13b    64  2048 |      10.74      1.07    9.67 |     32333.5
+  70b     1   512 |      14.70      1.25   13.45 |      4875.0
+  70b     1  2048 |       8.22      0.88    7.34 |      7409.1
+  70b     4   512 |       9.46      0.90    8.56 |      7292.3
+  70b     4  2048 |       9.92      0.75    9.17 |      7203.8
+  70b    16   512 |       8.51      0.75    7.76 |      7367.9
+  70b    16  2048 |      11.24      0.73   10.51 |      6971.7
+  70b    64   512 |       9.71      0.74    8.97 |      7097.5
+  70b    64  2048 |       8.37      0.74    7.63 |      7106.3
+
+[NOTE] single decoder layer at exact LLaMA-2 dims x n_layers; random weights
+(latency is shape/dtype-determined, exact for timing). gap_pp peaks at the
+comm-bound corner (small batch/seq) - the regime the proxy most misrepresents.
+==============================================================================
