@@ -1,0 +1,7 @@
+# world_size=2 dtype=bf16 nccl=(2, 28, 9)
+       1 MB     0.040ms  algbw    26.3 GB/s  busbw    26.3 GB/s
+       4 MB     0.053ms  algbw    79.8 GB/s  busbw    79.8 GB/s
+      16 MB     0.093ms  algbw   181.2 GB/s  busbw   181.2 GB/s
+      64 MB     0.263ms  algbw   255.1 GB/s  busbw   255.1 GB/s
+     256 MB     0.906ms  algbw   296.3 GB/s  busbw   296.3 GB/s
+    1024 MB     3.283ms  algbw   327.0 GB/s  busbw   327.0 GB/s
